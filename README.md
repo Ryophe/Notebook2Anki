@@ -35,7 +35,7 @@
 2. Generate a Quiz or Flashcards using Gemini Notebook's features
 3. Click the extension icon in Chrome toolbar
 4. Choose your export method:
-   - **Send to Anki**: Requires Anki desktop open with [AnkiConnect](https://ankiweb.net/shared/info/2055492159)
+   - **Send to Anki**: Requires Anki desktop open with [AnkiConnect](https://ankiweb.net/shared/info/2055492159); choose the destination deck from your existing Anki decks
    - **Download .apkg**: Creates a portable Anki package file
    - **Export CSV**: Creates CSV files for quizzes and/or flashcards
 
@@ -71,7 +71,8 @@ Both include dark theme styling and MathJax support.
 ## Export Formats
 
 ### AnkiConnect
-- Creates deck under `NotebookLM::` parent deck
+- Loads the existing Anki decks through AnkiConnect and lets you choose the destination deck
+- Uses the selected deck exactly as shown in Anki, including nested decks such as `School::Biology`
 - Creates note types automatically if missing
 - Best for direct integration
 
