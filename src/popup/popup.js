@@ -18,12 +18,12 @@ const elements = {
   quizLabel: document.getElementById("quiz-label"),
   flashcardCount: document.getElementById("flashcard-count"),
   flashcardLabel: document.getElementById("flashcard-label"),
+  createDeckSection: document.getElementById("create-deck-section"),
   deckName: document.getElementById("deck-name"),
   ankiDeck: document.getElementById("anki-deck"),
   refreshAnkiDecks: document.getElementById("btn-refresh-anki-decks"),
   deckPreview: document.getElementById("deck-preview"),
   previewQuiz: document.getElementById("preview-quiz"),
-  previewFlashcard: document.getElementById("preview-flashcard"),
   refresh: document.getElementById("btn-refresh"),
   anki: document.getElementById("btn-anki-connect"),
   ankiDetail: document.getElementById("anki-action-detail"),
@@ -58,11 +58,11 @@ async function initialize() {
 function bindEvents() {
   elements.status.addEventListener("click", checkAnkiStatus);
   elements.refreshAnkiDecks.addEventListener("click", loadAnkiDecks);
-  elements.ankiDeck.addEventListener("change", updateActionStates);
+  elements.ankiDeck.addEventListener("change", handleAnkiDeckChange);
   elements.refresh.addEventListener("click", scanActiveTab);
   elements.deckName.addEventListener("input", updateDeckPreview);
   elements.deckName.addEventListener("blur", () => {
-    if (elements.deckName.value.trim()) elements.deckName.value = getDeckName();
+    if (elements.deckName.value.trim()) elements.deckName.value = getCreateDeckName();
     updateDeckPreview();
   });
 
@@ -164,9 +164,9 @@ async function loadAnkiDecks() {
     for (const deck of response) {
       elements.ankiDeck.add(new Option(deck, deck));
     }
-    if (response.includes(previous)) elements.ankiDeck.value = previous;
-    if (response.length === 0) {
-      elements.ankiDeck.replaceChildren(new Option("No decks found in Anki", ""));
+    elements.ankiDeck.add(new Option("＋ Create new deck…", "__create__"));
+    if (previous === "__create__" || response.includes(previous)) {
+      elements.ankiDeck.value = previous;
     }
   } catch (error) {
     elements.ankiDeck.replaceChildren(new Option("Could not load Anki decks", ""));
@@ -175,6 +175,7 @@ async function loadAnkiDecks() {
     loadingAnkiDecks = false;
     elements.refreshAnkiDecks.disabled = !ankiConnected;
     elements.ankiDeck.disabled = !ankiConnected;
+    handleAnkiDeckChange();
     updateActionStates();
   }
 }
@@ -250,7 +251,9 @@ function showContentState() {
   elements.quizLabel.textContent = quizCount === 1 ? "quiz question" : "quiz questions";
   elements.flashcardCount.textContent = flashcardCount;
   elements.flashcardLabel.textContent = flashcardCount === 1 ? "flashcard" : "flashcards";
-  elements.deckName.value = extractedData.title === "Unknown Notebook" ? "" : extractedData.title;
+  if (!elements.deckName.value.trim()) {
+    elements.deckName.value = extractedData.title === "Unknown Notebook" ? "" : extractedData.title;
+  }
 
   elements.contentLoading.classList.add("hidden");
   elements.noContent.classList.add("hidden");
@@ -288,29 +291,35 @@ function mergeFrameData(results) {
   return merged;
 }
 
+function handleAnkiDeckChange() {
+  const createMode = elements.ankiDeck.value === "__create__";
+  elements.createDeckSection.classList.toggle("hidden", !createMode);
+  elements.deckName.disabled = !createMode || !hasContent(extractedData) || scanning || operationInProgress;
+  updateDeckPreview();
+  updateActionStates();
+}
+
 function updateDeckPreview() {
-  if (!hasContent(extractedData)) {
+  if (!hasContent(extractedData) || elements.ankiDeck.value !== "__create__") {
     elements.deckPreview.classList.add("hidden");
     return;
   }
 
-  const name = getDeckName();
-  const hasQuizzes = extractedData.quizzes.length > 0;
-  const hasFlashcards = extractedData.flashcards.length > 0;
   elements.deckPreview.classList.remove("hidden");
-  elements.previewQuiz.classList.toggle("hidden", !hasQuizzes);
-  elements.previewFlashcard.classList.toggle("hidden", !hasFlashcards);
-  elements.previewQuiz.querySelector(".preview-name").textContent = name;
-  elements.previewFlashcard.querySelector(".preview-name").textContent = name;
+  elements.previewQuiz.querySelector(".preview-name").textContent = getCreateDeckName();
 }
 
 function updateActionStates() {
   const hasExportData = hasContent(extractedData);
   const contentReady = hasExportData && !scanning && !operationInProgress;
-  elements.deckName.disabled = !hasExportData || scanning || operationInProgress;
+  const createMode = elements.ankiDeck.value === "__create__";
+  const hasDestination = createMode
+    ? Boolean(getCreateDeckName())
+    : Boolean(elements.ankiDeck.value);
+  elements.deckName.disabled = !createMode || !hasExportData || scanning || operationInProgress;
   elements.refreshAnkiDecks.disabled = !ankiConnected || scanning || operationInProgress || loadingAnkiDecks;
   elements.ankiDeck.disabled = !ankiConnected || scanning || operationInProgress || loadingAnkiDecks;
-  elements.anki.disabled = !contentReady || !ankiConnected || !elements.ankiDeck.value;
+  elements.anki.disabled = !contentReady || !ankiConnected || !hasDestination;
   elements.apkg.disabled = !contentReady;
   elements.csvAll.disabled = !contentReady;
   elements.csvToggle.disabled = !contentReady;
@@ -324,11 +333,13 @@ function updateActionStates() {
 }
 
 async function sendToAnki() {
+  const createMode = elements.ankiDeck.value === "__create__";
+  const deckName = createMode ? getCreateDeckName() : elements.ankiDeck.value;
   const response = await chrome.runtime.sendMessage({
     target: MESSAGE_TARGETS.BACKGROUND,
     action: ACTIONS.SEND_TO_ANKI,
     data: extractedData,
-    deckName: elements.ankiDeck.value,
+    deckName,
     exactDeck: true,
     type: EXPORT_TYPES.ALL
   });
@@ -354,7 +365,7 @@ async function downloadApkg() {
     target: MESSAGE_TARGETS.BACKGROUND,
     action: ACTIONS.GENERATE_APKG,
     data: extractedData,
-    deckName: getDeckName()
+    deckName: getNotebookName()
   });
   if (!response?.success) throw new Error(response?.error || "The APKG file could not be created");
   return `${formatCount(response.count, "card")} saved in ${response.filename}`;
@@ -421,12 +432,16 @@ function showMessage(text, type) {
   messageTimeout = setTimeout(() => elements.message.classList.add("hidden"), 6500);
 }
 
-function getDeckName() {
-  return sanitizeDeckName(elements.deckName.value || extractedData?.title, "NotebookLM Export");
+function getNotebookName() {
+  return sanitizeDeckName(extractedData?.title, "NotebookLM Export");
+}
+
+function getCreateDeckName() {
+  return sanitizeDeckName(elements.deckName.value, "NotebookLM Export");
 }
 
 function getFilenameBase() {
-  return sanitizeFilename(getDeckName());
+  return sanitizeFilename(getNotebookName());
 }
 
 function hasContent(data) {
