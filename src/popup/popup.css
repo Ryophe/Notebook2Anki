@@ -462,7 +462,11 @@ label {
 }
 
 .anki-deck-section {
-  margin-top: 13px;
+  margin-top: 19px;
+}
+
+.deck-section.hidden {
+  display: none !important;
 }
 
 select {
