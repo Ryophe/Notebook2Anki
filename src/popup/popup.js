@@ -19,6 +19,8 @@ const elements = {
   flashcardCount: document.getElementById("flashcard-count"),
   flashcardLabel: document.getElementById("flashcard-label"),
   deckName: document.getElementById("deck-name"),
+  ankiDeck: document.getElementById("anki-deck"),
+  refreshAnkiDecks: document.getElementById("btn-refresh-anki-decks"),
   deckPreview: document.getElementById("deck-preview"),
   previewQuiz: document.getElementById("preview-quiz"),
   previewFlashcard: document.getElementById("preview-flashcard"),
@@ -42,6 +44,7 @@ let ankiConnected = false;
 let scanning = false;
 let operationInProgress = false;
 let checkingAnki = false;
+let loadingAnkiDecks = false;
 let messageTimeout = null;
 
 bindEvents();
@@ -54,6 +57,8 @@ async function initialize() {
 
 function bindEvents() {
   elements.status.addEventListener("click", checkAnkiStatus);
+  elements.refreshAnkiDecks.addEventListener("click", loadAnkiDecks);
+  elements.ankiDeck.addEventListener("change", updateActionStates);
   elements.refresh.addEventListener("click", scanActiveTab);
   elements.deckName.addEventListener("input", updateDeckPreview);
   elements.deckName.addEventListener("blur", () => {
@@ -125,6 +130,7 @@ async function checkAnkiStatus() {
       action: ACTIONS.CHECK_ANKI
     });
     ankiConnected = Boolean(response?.connected);
+    if (ankiConnected) await loadAnkiDecks();
     setConnectionState(
       ankiConnected ? "connected" : "disconnected",
       ankiConnected ? "Anki ready" : "Anki offline"
@@ -135,6 +141,40 @@ async function checkAnkiStatus() {
   } finally {
     checkingAnki = false;
     elements.status.disabled = false;
+    updateActionStates();
+  }
+}
+
+async function loadAnkiDecks() {
+  if (!ankiConnected || loadingAnkiDecks) return;
+  loadingAnkiDecks = true;
+  elements.refreshAnkiDecks.disabled = true;
+  elements.ankiDeck.disabled = true;
+  const previous = elements.ankiDeck.value;
+  elements.ankiDeck.replaceChildren(new Option("Loading Anki decks…", ""));
+  try {
+    const response = await chrome.runtime.sendMessage({
+      target: MESSAGE_TARGETS.BACKGROUND,
+      action: ACTIONS.GET_ANKI_DECKS
+    });
+    if (!Array.isArray(response)) {
+      throw new Error(response?.error || "Could not load Anki decks");
+    }
+    elements.ankiDeck.replaceChildren(new Option("Choose a deck in Anki…", ""));
+    for (const deck of response) {
+      elements.ankiDeck.add(new Option(deck, deck));
+    }
+    if (response.includes(previous)) elements.ankiDeck.value = previous;
+    if (response.length === 0) {
+      elements.ankiDeck.replaceChildren(new Option("No decks found in Anki", ""));
+    }
+  } catch (error) {
+    elements.ankiDeck.replaceChildren(new Option("Could not load Anki decks", ""));
+    showMessage(formatError(error), "error");
+  } finally {
+    loadingAnkiDecks = false;
+    elements.refreshAnkiDecks.disabled = !ankiConnected;
+    elements.ankiDeck.disabled = !ankiConnected;
     updateActionStates();
   }
 }
@@ -268,7 +308,9 @@ function updateActionStates() {
   const hasExportData = hasContent(extractedData);
   const contentReady = hasExportData && !scanning && !operationInProgress;
   elements.deckName.disabled = !hasExportData || scanning || operationInProgress;
-  elements.anki.disabled = !contentReady || !ankiConnected;
+  elements.refreshAnkiDecks.disabled = !ankiConnected || scanning || operationInProgress || loadingAnkiDecks;
+  elements.ankiDeck.disabled = !ankiConnected || scanning || operationInProgress || loadingAnkiDecks;
+  elements.anki.disabled = !contentReady || !ankiConnected || !elements.ankiDeck.value;
   elements.apkg.disabled = !contentReady;
   elements.csvAll.disabled = !contentReady;
   elements.csvToggle.disabled = !contentReady;
@@ -286,7 +328,8 @@ async function sendToAnki() {
     target: MESSAGE_TARGETS.BACKGROUND,
     action: ACTIONS.SEND_TO_ANKI,
     data: extractedData,
-    deckName: getDeckName(),
+    deckName: elements.ankiDeck.value,
+    exactDeck: true,
     type: EXPORT_TYPES.ALL
   });
 
