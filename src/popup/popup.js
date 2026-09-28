@@ -437,7 +437,7 @@ function getNotebookName() {
 }
 
 function getCreateDeckName() {
-  return sanitizeDeckName(elements.deckName.value, "NotebookLM Export");
+  return sanitizeDeckName(elements.deckName.value, "");
 }
 
 function getFilenameBase() {
