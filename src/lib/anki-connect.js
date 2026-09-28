@@ -74,6 +74,15 @@ export async function checkAnkiConnect() {
   }
 }
 
+export async function getAnkiDeckNames() {
+  const decks = await ankiRequest("deckNames");
+  if (!Array.isArray(decks)) {
+    throw new Error("AnkiConnect returned an invalid deck list");
+  }
+  return [...decks].sort((a, b) => String(a).localeCompare(String(b)));
+}
+
+
 async function ensureModel(spec) {
   const modelNames = await ankiRequest("modelNames");
   if (!modelNames.includes(spec.name)) {
@@ -149,14 +158,14 @@ async function addUniqueNotes(notes) {
   };
 }
 
-export async function sendQuizzesToAnki(quizzes, deckName) {
+export async function sendQuizzesToAnki(quizzes, deckName, exactDeck = false) {
   const validQuizzes = (Array.isArray(quizzes) ? quizzes : []).filter(
     quiz => quiz && String(quiz.question || "").trim() && Array.isArray(quiz.options)
   );
   if (validQuizzes.length === 0) throw new Error("No valid quizzes to send");
 
   await ensureModel(MODEL_SPECS.quiz);
-  const targetDeck = buildDeckName(deckName, "Quiz");
+  const targetDeck = exactDeck ? sanitizeAnkiDeckName(deckName) : buildDeckName(deckName, "Quiz");
   await ankiRequest("createDeck", { deck: targetDeck });
 
   const notes = validQuizzes.map(quiz => ({
@@ -168,14 +177,14 @@ export async function sendQuizzesToAnki(quizzes, deckName) {
   return addUniqueNotes(notes);
 }
 
-export async function sendFlashcardsToAnki(flashcards, deckName) {
+export async function sendFlashcardsToAnki(flashcards, deckName, exactDeck = false) {
   const validFlashcards = (Array.isArray(flashcards) ? flashcards : []).filter(
     card => card && String(card.front || "").trim() && String(card.back || "").trim()
   );
   if (validFlashcards.length === 0) throw new Error("No valid flashcards to send");
 
   await ensureModel(MODEL_SPECS.flashcard);
-  const targetDeck = buildDeckName(deckName, "Flashcard");
+  const targetDeck = exactDeck ? sanitizeAnkiDeckName(deckName) : buildDeckName(deckName, "Flashcard");
   await ankiRequest("createDeck", { deck: targetDeck });
 
   const notes = validFlashcards.map(card => ({
@@ -190,23 +199,23 @@ export async function sendFlashcardsToAnki(flashcards, deckName) {
   return addUniqueNotes(notes);
 }
 
-export async function sendContentToAnki(data, deckName, type = EXPORT_TYPES.ALL) {
+export async function sendContentToAnki(data, deckName, type = EXPORT_TYPES.ALL, exactDeck = false) {
   if (!data || typeof data !== "object") throw new Error("No content was provided");
   if (!Object.values(EXPORT_TYPES).includes(type)) throw new Error(`Unsupported export type: ${type}`);
 
   if (type === EXPORT_TYPES.QUIZZES) {
-    return sendQuizzesToAnki(data.quizzes, deckName || data.title);
+    return sendQuizzesToAnki(data.quizzes, deckName || data.title, exactDeck);
   }
   if (type === EXPORT_TYPES.FLASHCARDS) {
-    return sendFlashcardsToAnki(data.flashcards, deckName || data.title);
+    return sendFlashcardsToAnki(data.flashcards, deckName || data.title, exactDeck);
   }
 
   const parts = [];
   if (data.quizzes?.length) {
-    parts.push(await sendQuizzesToAnki(data.quizzes, deckName || data.title));
+    parts.push(await sendQuizzesToAnki(data.quizzes, deckName || data.title, exactDeck));
   }
   if (data.flashcards?.length) {
-    parts.push(await sendFlashcardsToAnki(data.flashcards, deckName || data.title));
+    parts.push(await sendFlashcardsToAnki(data.flashcards, deckName || data.title, exactDeck));
   }
   if (parts.length === 0) throw new Error("No quizzes or flashcards were found");
 
@@ -220,6 +229,15 @@ export async function sendContentToAnki(data, deckName, type = EXPORT_TYPES.ALL)
     }),
     { success: true, count: 0, skipped: 0, failed: 0, total: 0 }
   );
+}
+
+function sanitizeAnkiDeckName(value) {
+  const name = String(value ?? "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!name) throw new Error("No Anki deck was selected");
+  return name;
 }
 
 function buildDeckName(deckName, kind) {
