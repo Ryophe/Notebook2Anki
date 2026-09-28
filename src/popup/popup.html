@@ -72,16 +72,6 @@
         </div>
       </section>
 
-      <section class="deck-section" aria-labelledby="deck-label">
-        <label id="deck-label" for="deck-name">Deck name</label>
-        <input id="deck-name" type="text" autocomplete="off" maxlength="120" placeholder="Notebook title" aria-describedby="deck-preview">
-        <div id="deck-preview" class="deck-preview hidden">
-          <span>Creates</span>
-          <span id="preview-quiz" class="preview-deck hidden"><b>Quiz</b><span class="preview-name"></span></span>
-          <span id="preview-flashcard" class="preview-deck hidden"><b>Cards</b><span class="preview-name"></span></span>
-        </div>
-      </section>
-
       <section class="anki-deck-section" aria-labelledby="anki-deck-label">
         <div class="field-heading">
           <label id="anki-deck-label" for="anki-deck">Anki deck</label>
@@ -91,8 +81,18 @@
         </div>
         <select id="anki-deck" disabled aria-describedby="anki-deck-help">
           <option value="">Choose a deck in Anki…</option>
+          <option value="__create__">＋ Create new deck…</option>
         </select>
-        <p id="anki-deck-help" class="field-help">Cards sent through AnkiConnect will use this deck exactly.</p>
+        <p id="anki-deck-help" class="field-help">Choose an existing deck or create a new one.</p>
+      </section>
+
+      <section id="create-deck-section" class="deck-section hidden" aria-labelledby="deck-label">
+        <label id="deck-label" for="deck-name">New deck name</label>
+        <input id="deck-name" type="text" autocomplete="off" maxlength="120" placeholder="Name for the new Anki deck" aria-describedby="deck-preview">
+        <div id="deck-preview" class="deck-preview hidden">
+          <span>Creates</span>
+          <span id="preview-quiz" class="preview-deck"><b>Deck</b><span class="preview-name"></span></span>
+        </div>
       </section>
 
       <section class="export-section" aria-labelledby="export-title">
