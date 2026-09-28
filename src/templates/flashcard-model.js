@@ -19,9 +19,9 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0;
-  padding: 28px 18px;
+  padding: clamp(22px, 5vw, 58px) 20px;
   display: grid;
-  place-items: center;
+  place-items: start center;
   box-sizing: border-box;
   background: radial-gradient(circle at 50% -20%, rgba(168, 199, 250, .12), transparent 44%), #171918;
   font-size: 18px;
@@ -30,6 +30,7 @@ body {
 }
 .flashcard-shell {
   width: min(100%, 640px);
+  margin: 0 auto;
   padding: clamp(24px, 5vw, 42px);
   box-sizing: border-box;
   border: 1px solid #3b423c;
