@@ -71,8 +71,9 @@ Both include dark theme styling and MathJax support.
 ## Export Formats
 
 ### AnkiConnect
-- Loads the existing Anki decks through AnkiConnect and lets you choose the destination deck
-- Uses the selected deck exactly as shown in Anki, including nested decks such as `School::Biology`
+- Loads existing Anki decks through AnkiConnect and lets you choose the destination deck
+- Also offers **Create new deck** with a user-defined deck name
+- Uses the selected or created deck exactly as entered, including nested decks such as `School::Biology`
 - Creates note types automatically if missing
 - Best for direct integration
 
