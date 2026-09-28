@@ -82,6 +82,19 @@
         </div>
       </section>
 
+      <section class="anki-deck-section" aria-labelledby="anki-deck-label">
+        <div class="field-heading">
+          <label id="anki-deck-label" for="anki-deck">Anki deck</label>
+          <button id="btn-refresh-anki-decks" class="inline-icon-button" type="button" aria-label="Refresh Anki decks" title="Refresh Anki decks" disabled>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.35 5.65M20 4v7h-7"/></svg>
+          </button>
+        </div>
+        <select id="anki-deck" disabled aria-describedby="anki-deck-help">
+          <option value="">Choose a deck in Anki…</option>
+        </select>
+        <p id="anki-deck-help" class="field-help">Cards sent through AnkiConnect will use this deck exactly.</p>
+      </section>
+
       <section class="export-section" aria-labelledby="export-title">
         <div class="section-heading export-heading">
           <div>
