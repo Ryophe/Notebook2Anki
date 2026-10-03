@@ -1,7 +1,7 @@
 // NotebookLM2Anki - Background service worker
 
 import { ACTIONS, EXPORT_TYPES, MESSAGE_TARGETS } from "../lib/constants.js";
-import { checkAnkiConnect, sendContentToAnki } from "../lib/anki-connect.js";
+import { checkAnkiConnect, getAnkiDeckNames, sendContentToAnki } from "../lib/anki-connect.js";
 
 let creatingOffscreenDocument = null;
 
@@ -18,11 +18,14 @@ async function handleMessage(message) {
   switch (message?.action) {
     case ACTIONS.CHECK_ANKI:
       return checkAnkiConnect();
+    case ACTIONS.GET_ANKI_DECKS:
+      return getAnkiDeckNames();
     case ACTIONS.SEND_TO_ANKI:
       return sendContentToAnki(
         message.data,
         message.deckName,
-        message.type || EXPORT_TYPES.ALL
+        message.type || EXPORT_TYPES.ALL,
+        message.existingDeckName || ""
       );
     case ACTIONS.GENERATE_APKG:
       return generateApkg(message);
