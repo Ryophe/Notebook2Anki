@@ -3,7 +3,6 @@
 const ID_MIN = 2 ** 30;
 const ID_RANGE = 2 ** 30;
 
-
 /** Generate a positive 31-bit ID accepted by Anki. */
 export function generateId() {
   if (globalThis.crypto?.getRandomValues) {
@@ -14,31 +13,27 @@ export function generateId() {
   return ID_MIN + Math.floor(Math.random() * ID_RANGE);
 }
 
-
 /** Convert NotebookLM rich text into safe, Notebook-like Anki HTML. */
 export function cleanMath(value) {
-  const text = String(value ?? "").replace(/\r
-?/g, "
-");
+  const text = String(value ?? "").replace(/\r\n?/g, "\n");
   const tokens = [];
 
   const tokenized = text
     .replace(/\$\$(.*?)\$\$/gs, (_, body) => {
-      const index = tokens.push(`\\[${body}\\]`) - 1;
-      return `@@NBMATH${index}@@`;
+      const index = tokens.push(`\\[\${body}\\]`) - 1;
+      return `@@NBMATH\${index}@@`;
     })
     .replace(/\$((?:[^$]|\\\$)+?)\$/g, (_, body) => {
-      const index = tokens.push(`\\(${body}\\)`) - 1;
-      return `@@NBMATH${index}@@`;
+      const index = tokens.push(`\\(\${body}\\)`) - 1;
+      return `@@NBMATH\${index}@@`;
     })
-    .replace(/`([^`]+)`/g, (_, code) => {
-      const index = tokens.push(`<code class="latex-snippet">${escapeHtml(code)}</code>`) - 1;
-      return `@@NBCODE${index}@@`;
+    .replace(/\`([^\`]+)\`/g, (_, code) => {
+      const index = tokens.push(`<code class="latex-snippet">\${escapeHtml(code)}</code>`) - 1;
+      return `@@NBCODE\${index}@@`;
     });
 
   const safe = escapeHtml(tokenized);
-  const lines = safe.split("
-");
+  const lines = safe.split("\n");
   const blocks = [];
   let paragraph = [];
   let listType = null;
@@ -47,13 +42,13 @@ export function cleanMath(value) {
   const flushParagraph = () => {
     if (paragraph.length === 0) return;
     const content = paragraph.join("<br>");
-    if (content.trim()) blocks.push(`<p>${content}</p>`);
+    if (content.trim()) blocks.push(`<p>\${content}</p>`);
     paragraph = [];
   };
 
   const flushList = () => {
     if (!listType || listItems.length === 0) return;
-    blocks.push(`<${listType}>${listItems.map(item => `<li>${item}</li>`).join("")}</${listType}>`);
+    blocks.push(`<\${listType}>\${listItems.map(item => `<li>\${item}</li>`).join("")}</\${listType}>`);
     listType = null;
     listItems = [];
   };
@@ -66,7 +61,7 @@ export function cleanMath(value) {
       continue;
     }
 
-    const bullet = trimmed.match(/^-\s+(.*)$/);
+    const bullet = trimmed.match(/^ -?\s+(.*)$/);
     const numbered = trimmed.match(/^\d+[.)]\s+(.*)$/);
     if (bullet || numbered) {
       flushParagraph();
@@ -87,8 +82,8 @@ export function cleanMath(value) {
   let html = blocks.join("");
   tokens.forEach((token, index) => {
     html = html
-      .replace(`@@NBMATH${index}@@`, token)
-      .replace(`@@NBCODE${index}@@`, token);
+      .replace(`@@NBMATH\${index}@@`, token)
+      .replace(`@@NBCODE\${index}@@`, token);
   });
   return html;
 }
@@ -118,7 +113,6 @@ export function sanitizeFilename(value, fallback = "notebooklm-export") {
     .trim();
   return filename || fallback;
 }
-
 
 /** Start a browser download and release its object URL after navigation begins. */
 export function downloadFile(content, filename, mimeType = "text/plain") {
