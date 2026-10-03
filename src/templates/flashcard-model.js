@@ -95,12 +95,21 @@ body {
   text-wrap: pretty;
   word-break: normal;
 }
-.front-section mjx-container,
-.back-section mjx-container,
-.front-repeat mjx-container,
-.front-section .MathJax,
-.back-section .MathJax,
-.front-repeat .MathJax,
+.front-section mjx-container:not([display="true"]),
+.back-section mjx-container:not([display="true"]),
+.front-repeat mjx-container:not([display="true"]),
+.front-section .MathJax:not(.MathJax_Display),
+.back-section .MathJax:not(.MathJax_Display),
+.front-repeat .MathJax:not(.MathJax_Display) {
+  display: inline !important;
+  max-width: 100% !important;
+}
+.front-section mjx-container[display="true"],
+.back-section mjx-container[display="true"],
+.front-repeat mjx-container[display="true"],
+.front-section .MathJax_Display,
+.back-section .MathJax_Display,
+.front-repeat .MathJax_Display,
 .front-section .katex-display,
 .back-section .katex-display,
 .front-repeat .katex-display {
@@ -109,10 +118,6 @@ body {
   box-sizing: border-box !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-}
-.front-section mjx-container[display="true"],
-.back-section mjx-container[display="true"],
-.front-repeat mjx-container[display="true"] {
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
