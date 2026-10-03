@@ -283,8 +283,49 @@
 
   function firstText(...values) {
     for (const value of values) {
-      if (typeof value === "string" && value.trim()) return value.trim();
+      const text = textFromValue(value);
+      if (text) return text;
     }
+    return "";
+  }
+
+  // NotebookLM flashcards currently store each side as:
+  // { flashcardContentBlock: [{ type: "text", content: "..." }] }.
+  // Older extraction only accepted plain strings, so it saw f/b but discarded
+  // both sides and consequently reported zero flashcards.
+  function textFromValue(value, depth = 0) {
+    if (depth > 8 || value == null) return "";
+
+    if (typeof value === "string") {
+      return value.trim();
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const text = textFromValue(item, depth + 1);
+        if (text) return text;
+      }
+      return "";
+    }
+
+    if (typeof value !== "object") return "";
+
+    const preferredKeys = [
+      "content",
+      "text",
+      "value",
+      "plainText",
+      "markdown",
+      "html",
+      "flashcardContentBlock"
+    ];
+
+    for (const key of preferredKeys) {
+      if (!(key in value)) continue;
+      const text = textFromValue(value[key], depth + 1);
+      if (text) return text;
+    }
+
     return "";
   }
 
