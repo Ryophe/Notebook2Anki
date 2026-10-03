@@ -160,17 +160,30 @@ async function addUniqueNotes(notes) {
     throw new Error("AnkiConnect returned incomplete note verification results");
   }
 
-  const expectedDecks = new Set(addableNotes.map(note => note.deckName));
-  const verified = noteInfo.filter(note => {
-    if (!note || !Array.isArray(note.cards)) return false;
-    return note.cards.some(card => {
-      const deckName = card?.deckName;
-      return typeof deckName === "string" && expectedDecks.has(deckName);
-    });
-  });
+  const cardIds = noteInfo.flatMap(note => Array.isArray(note?.cards) ? note.cards : []);
+  if (cardIds.length === 0) {
+    throw new Error("Anki created the notes but returned no cards for them");
+  }
 
-  if (verified.length !== createdNoteIds.length) {
-    const missing = createdNoteIds.length - verified.length;
+  const cardInfo = await ankiRequest("cardsInfo", { cards: cardIds });
+  if (!Array.isArray(cardInfo) || cardInfo.length !== cardIds.length) {
+    throw new Error("AnkiConnect returned incomplete card verification results");
+  }
+
+  const expectedDecks = new Set(addableNotes.map(note => note.deckName));
+  const verifiedCardIds = new Set(
+    cardInfo
+      .filter(card => card && typeof card.deckName === "string" && expectedDecks.has(card.deckName))
+      .map(card => card.cardId)
+  );
+
+  const verifiedNotes = noteInfo.filter(note =>
+    Array.isArray(note?.cards) &&
+    note.cards.some(cardId => verifiedCardIds.has(cardId))
+  );
+
+  if (verifiedNotes.length !== createdNoteIds.length) {
+    const missing = createdNoteIds.length - verifiedNotes.length;
     throw new Error(
       `Anki created ${createdNoteIds.length} note${createdNoteIds.length === 1 ? "" : "s"}, but ${missing} ${missing === 1 ? "note is" : "notes are"} not in the requested deck`
     );
@@ -178,7 +191,7 @@ async function addUniqueNotes(notes) {
 
   return {
     success: failed === 0,
-    count: verified.length,
+    count: verifiedNotes.length,
     skipped,
     failed,
     total: notes.length
