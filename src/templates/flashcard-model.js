@@ -33,15 +33,15 @@ body {
   text-align: left;
 }
 .flashcard-shell {
-  width: min(100%, 900px);
+  width: min(100%, 1200px);
   margin: 0 auto;
-  padding: clamp(24px, 5vw, 42px);
+  padding: clamp(24px, 4vw, 40px);
   box-sizing: border-box;
   border: 1px solid #3b423c;
   border-radius: 18px 18px 18px 6px;
   background: #1f2320;
   box-shadow: 0 18px 50px rgba(7, 10, 8, .3);
-  overflow: hidden;
+  overflow: visible;
 }
 .card-label {
   margin-bottom: 16px;
