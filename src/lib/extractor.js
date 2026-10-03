@@ -12,7 +12,13 @@
   const MAX_WALK_DEPTH = 32;
 
   function extractFromPage(doc = document) {
-    const roots = Array.from(doc.querySelectorAll("[data-app-data]"));
+    // NotebookLM/Gemini Notebook renders the generated study artifact in an
+    // app-root. Prefer that canonical node; fall back to any data-app-data
+    // nodes for older layouts.
+    const appRoot = doc.querySelector("app-root[data-app-data]");
+    const roots = appRoot
+      ? [appRoot]
+      : Array.from(doc.querySelectorAll("[data-app-data]"));
     if (roots.length === 0) return null;
 
     const aggregate = { title: "", quizzes: [], flashcards: [] };
