@@ -134,15 +134,15 @@ async function checkAnkiStatus() {
     });
     ankiConnected = Boolean(response?.connected);
     if (ankiConnected) {
-      await loadAnkiDecks();
+      // Do not block the connection indicator on deckNames: a slow/hung
+      // AnkiConnect request must not leave the whole popup in "Checking Anki".
+      setConnectionState("connected", "Anki ready");
+      loadAnkiDecks();
     } else {
       ankiDecks = [];
       populateExistingDecks();
+      setConnectionState("disconnected", "Anki offline");
     }
-    setConnectionState(
-      ankiConnected ? "connected" : "disconnected",
-      ankiConnected ? "Anki ready" : "Anki offline"
-    );
   } catch {
     ankiConnected = false;
     setConnectionState("disconnected", "Anki offline");
@@ -429,6 +429,7 @@ async function loadAnkiDecks() {
     ankiDecks = [];
   }
   populateExistingDecks();
+  updateActionStates();
 }
 
 function populateExistingDecks() {
