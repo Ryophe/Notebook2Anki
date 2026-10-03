@@ -291,7 +291,7 @@ function updateActionStates() {
   elements.deckName.disabled = !hasExportData || usingExisting || scanning || operationInProgress;
   elements.existingDeck.disabled = !hasExportData || !ankiConnected || !usingExisting || scanning || operationInProgress;
   elements.anki.disabled = !contentReady || !ankiConnected;
-  elements.apkg.disabled = !contentReady;
+  elements.apkg.disabled = !contentReady || usingExisting;
   elements.csvAll.disabled = !contentReady;
   elements.csvToggle.disabled = !contentReady;
   elements.csvQuizzes.disabled = !contentReady || !extractedData?.quizzes.length;
