@@ -17,6 +17,7 @@
 
   let activeMiner = null;
   let activeMinerCount = -1;
+  let activeMinerFlashcards = 0;
   let activeRequestId = null;
   let exportTimeout = null;
   let resetTimeout = null;
@@ -30,12 +31,14 @@
   function initializeMiner() {
     const announce = () => {
       const data = extractPageData();
-      if (!data) return false;
+      if (!data || !hasContent(data)) return false;
 
       window.top.postMessage({
         channel: CHANNEL,
         action: "miner-ready",
-        count: data.quizzes.length + data.flashcards.length
+        count: data.quizzes.length + data.flashcards.length,
+        flashcards: data.flashcards.length,
+        quizzes: data.quizzes.length
       }, "*");
       return true;
     };
@@ -44,7 +47,12 @@
       const observer = new MutationObserver(() => {
         if (announce()) observer.disconnect();
       });
-      observer.observe(document.documentElement, { childList: true, subtree: true });
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["data-app-data"]
+      });
     }
 
     window.addEventListener("message", event => {
@@ -102,9 +110,17 @@
 
       if (event.data.action === "miner-ready") {
         const count = Number(event.data.count) || 0;
-        if (!activeMiner || count > activeMinerCount) {
+        const flashcards = Number(event.data.flashcards) || 0;
+        const shouldPreferFrame =
+          !activeMiner ||
+          (flashcards > 0 && activeMinerFlashcards === 0) ||
+          (flashcards > 0 && activeMinerFlashcards > 0 && count > activeMinerCount) ||
+          (flashcards === 0 && activeMinerFlashcards === 0 && count > activeMinerCount);
+
+        if (shouldPreferFrame) {
           activeMiner = event.source;
           activeMinerCount = count;
+          activeMinerFlashcards = flashcards;
         }
         updateButton("ready");
         return;
