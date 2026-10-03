@@ -26,6 +26,7 @@ body {
   justify-content: center;
   box-sizing: border-box;
   overflow-x: hidden;
+  overscroll-behavior-x: none;
   background: radial-gradient(circle at 50% -20%, rgba(168, 199, 250, .12), transparent 44%), #171918;
   font-size: 18px;
   line-height: 1.65;
@@ -40,6 +41,7 @@ body {
   border-radius: 18px 18px 18px 6px;
   background: #1f2320;
   box-shadow: 0 18px 50px rgba(7, 10, 8, .3);
+  overflow: hidden;
 }
 .card-label {
   margin-bottom: 16px;
@@ -60,6 +62,25 @@ body {
   text-wrap: pretty;
   word-break: normal;
 }
+.front-section p,
+.back-section p,
+.front-repeat p {
+  margin: 0 0 1em;
+}
+.front-section ul,
+.front-section ol,
+.back-section ul,
+.back-section ol,
+.front-repeat ul,
+.front-repeat ol {
+  margin: 0 0 1em;
+  padding-left: 1.45em;
+}
+.front-section li,
+.back-section li,
+.front-repeat li {
+  margin: .28em 0;
+}
 .answer-divider {
   height: 1px;
   margin: 24px 0 16px;
@@ -74,13 +95,31 @@ body {
   text-wrap: pretty;
   word-break: normal;
 }
+.front-section mjx-container,
 .back-section mjx-container,
+.front-repeat mjx-container,
+.front-section .MathJax,
 .back-section .MathJax,
-.back-section .katex,
-.back-section .katex-display {
+.front-repeat .MathJax,
+.front-section .katex-display,
+.back-section .katex-display,
+.front-repeat .katex-display {
+  display: block !important;
   max-width: 100% !important;
+  box-sizing: border-box !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
+}
+.front-section mjx-container[display="true"],
+.back-section mjx-container[display="true"],
+.front-repeat mjx-container[display="true"] {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.front-section mjx-container svg,
+.back-section mjx-container svg,
+.front-repeat mjx-container svg {
+  max-width: none !important;
 }
 .front-repeat {
   min-width: 0;
@@ -146,13 +185,6 @@ export function getFlashcardModel() {
 function createMathScript(elementIds) {
   return `<script>
 (function () {
-  function cleanMath(value) {
-    if (!value) return "";
-    return value
-      .replace(/\\$\\$(.*?)\\$\\$/gs, "\\\\[$1\\\\]")
-      .replace(/\\$((?:[^$]|\\\\\\$)+?)\\$/g, "\\\\($1\\\\)")
-      .replace(/\u0060([^\u0060]+)\u0060/g, '<code class="latex-snippet">$1</code>');
-  }
   function typeset(elements) {
     if (typeof MathJax === "undefined") return;
     if (MathJax.typesetPromise) MathJax.typesetPromise(elements).catch(function () {});
@@ -161,9 +193,6 @@ function createMathScript(elementIds) {
   var elements = ${JSON.stringify(elementIds)}.map(function (id) {
     return document.getElementById(id);
   }).filter(Boolean);
-  elements.forEach(function (element) {
-    element.innerHTML = cleanMath(element.innerHTML);
-  });
   setTimeout(function () { typeset(elements); }, 80);
 })();
 <\\/script>`;
