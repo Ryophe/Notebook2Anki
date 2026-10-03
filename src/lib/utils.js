@@ -18,19 +18,15 @@ export function cleanMath(value) {
   const text = String(value ?? "").replace(/\r\n?/g, "\n");
   const tokens = [];
 
+  const addToken = (html, kind) => {
+    const index = tokens.push({ html, kind }) - 1;
+    return `@@NBTOKEN${index}@@`;
+  };
+
   const tokenized = text
-    .replace(/\$\$(.*?)\$\$/gs, (_, body) => {
-      const index = tokens.push(`\\[${body}\\]`) - 1;
-      return `@@NBMATH${index}@@`;
-    })
-    .replace(/\$((?:[^$]|\\\$)+?)\$/g, (_, body) => {
-      const index = tokens.push(`\\(${body}\\)`) - 1;
-      return `@@NBMATH${index}@@`;
-    })
-    .replace(/`([^`]+)`/g, (_, code) => {
-      const index = tokens.push(`<code class="latex-snippet">${escapeHtml(code)}</code>`) - 1;
-      return `@@NBCODE${index}@@`;
-    });
+    .replace(/\$\$(.*?)\$\$/gs, (_, body) => addToken(`\\[${body}\\]`, "display-math"))
+    .replace(/\$((?:[^$]|\\\$)+?)\$/g, (_, body) => addToken(`\\(${body}\\)`, "inline-math"))
+    .replace(/`([^`]+)`/g, (_, code) => addToken(`<code class="latex-snippet">${escapeHtml(code)}</code>`, "code"));
 
   const safe = escapeHtml(tokenized);
   const lines = safe.split("\n");
@@ -38,6 +34,23 @@ export function cleanMath(value) {
   let paragraph = [];
   let listType = null;
   let listItems = [];
+
+  const tokenInfo = line => {
+    const match = line.match(/^@@NBTOKEN(\d+)@@([.,;:!?)]*)$/);
+    if (!match) return null;
+    const token = tokens[Number(match[1])];
+    if (!token || token.kind !== "inline-math") return null;
+    return { line, punctuation: match[2] };
+  };
+
+  const appendInline = valueToAppend => {
+    if (paragraph.length === 0) {
+      paragraph.push(valueToAppend);
+      return;
+    }
+    const noSpace = /^[.,;:!?)]/.test(valueToAppend);
+    paragraph[paragraph.length - 1] += `${noSpace ? "" : " "}${valueToAppend}`;
+  };
 
   const flushParagraph = () => {
     if (paragraph.length === 0) return;
@@ -72,6 +85,13 @@ export function cleanMath(value) {
       continue;
     }
 
+    const inlineOnly = tokenInfo(trimmed);
+    if (inlineOnly && listType) flushList();
+    if (inlineOnly) {
+      appendInline(trimmed);
+      continue;
+    }
+
     if (listType) flushList();
     paragraph.push(trimmed);
   }
@@ -81,13 +101,10 @@ export function cleanMath(value) {
 
   let html = blocks.join("");
   tokens.forEach((token, index) => {
-    html = html
-      .replace(`@@NBMATH${index}@@`, token)
-      .replace(`@@NBCODE${index}@@`, token);
+    html = html.replace(`@@NBTOKEN${index}@@`, token.html);
   });
   return html;
 }
-
 /** Escape a value as one RFC 4180-compatible CSV cell. */
 export function escapeCSV(value) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
