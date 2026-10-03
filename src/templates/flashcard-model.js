@@ -114,24 +114,24 @@ body {
 .back-section .katex-display,
 .front-repeat .katex-display {
   display: block !important;
+  width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
+  padding-bottom: 4px !important;
 }
-.front-section mjx-container svg,
-.back-section mjx-container svg,
-.front-repeat mjx-container svg {
+.front-section mjx-container[display="true"] > svg,
+.back-section mjx-container[display="true"] > svg,
+.front-repeat mjx-container[display="true"] > svg {
   max-width: none !important;
 }
-.front-repeat {
-  min-width: 0;
-  color: #aeb7af;
-  font-size: .96rem;
-  line-height: 1.55;
-  overflow-wrap: anywhere;
+.front-section .MathJax_Display > .MathJax,
+.back-section .MathJax_Display > .MathJax,
+.front-repeat .MathJax_Display > .MathJax {
+  max-width: none !important;
 }
 .latex-snippet,
 code {
