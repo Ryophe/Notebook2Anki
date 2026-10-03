@@ -15,7 +15,85 @@ export function generateId() {
 }
 
 
-/** Convert NotebookLM rich text into safe, Notebook-like Anki HTML. */\nexport function cleanMath(value) {\n  const text = String(value ?? "").replace(/\r\n?/g, "\n");\n  const tokens = [];\n\n  const tokenized = text\n    .replace(/\$\$(.*?)\$\$/gs, (_, body) => {\n      const index = tokens.push(`\\[${body}\\]`) - 1;\n      return `@@NBMATH${index}@@`;\n    })\n    .replace(/\$((?:[^$]|\\\$)+?)\$/g, (_, body) => {\n      const index = tokens.push(`\\(${body}\\)`) - 1;\n      return `@@NBMATH${index}@@`;\n    })\n    .replace(/`([^`]+)`/g, (_, code) => {\n      const index = tokens.push(`<code class="latex-snippet">${escapeHtml(code)}</code>`) - 1;\n      return `@@NBCODE${index}@@`;\n    });\n\n  const safe = escapeHtml(tokenized);\n  const lines = safe.split("\n");\n  const blocks = [];\n  let paragraph = [];\n  let listType = null;\n  let listItems = [];\n\n  const flushParagraph = () => {\n    if (paragraph.length === 0) return;\n    const content = paragraph.join("<br>");\n    if (content.trim()) blocks.push(`<p>${content}</p>`);\n    paragraph = [];\n  };\n\n  const flushList = () => {\n    if (!listType || listItems.length === 0) return;\n    blocks.push(`<${listType}>${listItems.map(item => `<li>${item}</li>`).join("")}</${listType}>`);\n    listType = null;\n    listItems = [];\n  };\n\n  for (const line of lines) {\n    const trimmed = line.trim();\n    if (!trimmed) {\n      flushParagraph();\n      flushList();\n      continue;\n    }\n\n    const bullet = trimmed.match(/^-\s+(.*)$/);\n    const numbered = trimmed.match(/^\d+[.)]\s+(.*)$/);\n    if (bullet || numbered) {\n      flushParagraph();\n      const nextType = bullet ? "ul" : "ol";\n      if (listType && listType !== nextType) flushList();\n      listType = nextType;\n      listItems.push(bullet ? bullet[1] : numbered[1]);\n      continue;\n    }\n\n    if (listType) flushList();\n    paragraph.push(trimmed);\n  }\n\n  flushParagraph();\n  flushList();\n\n  let html = blocks.join("");\n  tokens.forEach((token, index) => {\n    html = html\n      .replace(`@@NBMATH${index}@@`, token)\n      .replace(`@@NBCODE${index}@@`, token);\n  });\n  return html;\n}\n\n/** Escape a value as one RFC 4180-compatible CSV cell. */
+/** Convert NotebookLM rich text into safe, Notebook-like Anki HTML. */
+export function cleanMath(value) {
+  const text = String(value ?? "").replace(/\r
+?/g, "
+");
+  const tokens = [];
+
+  const tokenized = text
+    .replace(/\$\$(.*?)\$\$/gs, (_, body) => {
+      const index = tokens.push(`\\[${body}\\]`) - 1;
+      return `@@NBMATH${index}@@`;
+    })
+    .replace(/\$((?:[^$]|\\\$)+?)\$/g, (_, body) => {
+      const index = tokens.push(`\\(${body}\\)`) - 1;
+      return `@@NBMATH${index}@@`;
+    })
+    .replace(/`([^`]+)`/g, (_, code) => {
+      const index = tokens.push(`<code class="latex-snippet">${escapeHtml(code)}</code>`) - 1;
+      return `@@NBCODE${index}@@`;
+    });
+
+  const safe = escapeHtml(tokenized);
+  const lines = safe.split("
+");
+  const blocks = [];
+  let paragraph = [];
+  let listType = null;
+  let listItems = [];
+
+  const flushParagraph = () => {
+    if (paragraph.length === 0) return;
+    const content = paragraph.join("<br>");
+    if (content.trim()) blocks.push(`<p>${content}</p>`);
+    paragraph = [];
+  };
+
+  const flushList = () => {
+    if (!listType || listItems.length === 0) return;
+    blocks.push(`<${listType}>${listItems.map(item => `<li>${item}</li>`).join("")}</${listType}>`);
+    listType = null;
+    listItems = [];
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const bullet = trimmed.match(/^-\s+(.*)$/);
+    const numbered = trimmed.match(/^\d+[.)]\s+(.*)$/);
+    if (bullet || numbered) {
+      flushParagraph();
+      const nextType = bullet ? "ul" : "ol";
+      if (listType && listType !== nextType) flushList();
+      listType = nextType;
+      listItems.push(bullet ? bullet[1] : numbered[1]);
+      continue;
+    }
+
+    if (listType) flushList();
+    paragraph.push(trimmed);
+  }
+
+  flushParagraph();
+  flushList();
+
+  let html = blocks.join("");
+  tokens.forEach((token, index) => {
+    html = html
+      .replace(`@@NBMATH${index}@@`, token)
+      .replace(`@@NBCODE${index}@@`, token);
+  });
+  return html;
+}
+
+/** Escape a value as one RFC 4180-compatible CSV cell. */
 export function escapeCSV(value) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
