@@ -15,6 +15,7 @@ export const MESSAGE_TARGETS = Object.freeze({
 
 export const ACTIONS = Object.freeze({
   CHECK_ANKI: "checkAnki",
+  GET_ANKI_DECKS: "getAnkiDecks",
   SEND_TO_ANKI: "sendToAnki",
   GENERATE_APKG: "generateApkg"
 });
