@@ -6,8 +6,10 @@
   if (global.NotebookLM2AnkiExtractor) return;
 
   const UNKNOWN_TITLE = "Unknown Notebook";
-  const MAX_WALK_NODES = 10000;
-  const MAX_WALK_DEPTH = 16;
+  // NotebookLM can nest generated study content fairly deeply. Keep the walk bounded,
+  // but leave enough room for larger/changed payloads so valid cards are not missed.
+  const MAX_WALK_NODES = 50000;
+  const MAX_WALK_DEPTH = 32;
 
   function extractFromPage(doc = document) {
     const roots = Array.from(doc.querySelectorAll("[data-app-data]"));
@@ -97,14 +99,38 @@
 
   function normalizeFlashcard(candidate, path) {
     const pathText = path.join(".").toLowerCase();
-    const knownShape = "f" in candidate || "b" in candidate;
-    const namedCollection = pathText.includes("flashcard") || pathText.includes("studycard");
-    if (!knownShape && !namedCollection) return null;
+    const namedCollection = /flash.?card|study.?card/.test(pathText);
 
-    const front = firstText(candidate.f, candidate.front, candidate.term, candidate.question);
-    const back = firstText(candidate.b, candidate.back, candidate.definition, candidate.answer);
-    if (!front || !back) return null;
+    // NotebookLM has used several equivalent shapes for generated cards over time.
+    // Do not require the parent path to contain "flashcard": a payload can move the
+    // collection under an opaque/generated key while retaining the front/back fields.
+    const front = firstText(
+      candidate.f,
+      candidate.front,
+      candidate.frontText,
+      candidate.term,
+      candidate.question,
+      candidate.prompt
+    );
+    const back = firstText(
+      candidate.b,
+      candidate.back,
+      candidate.backText,
+      candidate.definition,
+      candidate.answer,
+      candidate.response
+    );
 
+    const hasExplicitPair = Boolean(
+      (candidate.f != null && candidate.b != null) ||
+      (candidate.front != null && candidate.back != null) ||
+      (candidate.frontText != null && candidate.backText != null) ||
+      (candidate.term != null && candidate.definition != null) ||
+      (candidate.question != null && candidate.answer != null) ||
+      (candidate.prompt != null && candidate.response != null)
+    );
+
+    if ((!namedCollection && !hasExplicitPair) || !front || !back) return null;
     return { type: "flashcard", front, back };
   }
 
