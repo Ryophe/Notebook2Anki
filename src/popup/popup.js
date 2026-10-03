@@ -18,8 +18,13 @@ const elements = {
   quizLabel: document.getElementById("quiz-label"),
   flashcardCount: document.getElementById("flashcard-count"),
   flashcardLabel: document.getElementById("flashcard-label"),
+  deckMode: document.getElementById("deck-mode"),
+  newDeckControls: document.getElementById("new-deck-controls"),
+  existingDeckControls: document.getElementById("existing-deck-controls"),
   deckName: document.getElementById("deck-name"),
+  existingDeck: document.getElementById("existing-deck"),
   deckPreview: document.getElementById("deck-preview"),
+  previewPrefix: document.getElementById("preview-prefix"),
   previewQuiz: document.getElementById("preview-quiz"),
   previewFlashcard: document.getElementById("preview-flashcard"),
   refresh: document.getElementById("btn-refresh"),
@@ -39,6 +44,7 @@ const elements = {
 
 let extractedData = null;
 let ankiConnected = false;
+let ankiDecks = [];
 let scanning = false;
 let operationInProgress = false;
 let checkingAnki = false;
@@ -55,7 +61,9 @@ async function initialize() {
 function bindEvents() {
   elements.status.addEventListener("click", checkAnkiStatus);
   elements.refresh.addEventListener("click", scanActiveTab);
+  elements.deckMode.addEventListener("change", updateDeckDestination);
   elements.deckName.addEventListener("input", updateDeckPreview);
+  elements.existingDeck.addEventListener("change", updateDeckPreview);
   elements.deckName.addEventListener("blur", () => {
     if (elements.deckName.value.trim()) elements.deckName.value = getDeckName();
     updateDeckPreview();
@@ -125,6 +133,12 @@ async function checkAnkiStatus() {
       action: ACTIONS.CHECK_ANKI
     });
     ankiConnected = Boolean(response?.connected);
+    if (ankiConnected) {
+      await loadAnkiDecks();
+    } else {
+      ankiDecks = [];
+      populateExistingDecks();
+    }
     setConnectionState(
       ankiConnected ? "connected" : "disconnected",
       ankiConnected ? "Anki ready" : "Anki offline"
@@ -210,7 +224,9 @@ function showContentState() {
   elements.quizLabel.textContent = quizCount === 1 ? "quiz question" : "quiz questions";
   elements.flashcardCount.textContent = flashcardCount;
   elements.flashcardLabel.textContent = flashcardCount === 1 ? "flashcard" : "flashcards";
+  elements.deckMode.value = "new";
   elements.deckName.value = extractedData.title === "Unknown Notebook" ? "" : extractedData.title;
+  updateDeckDestination();
 
   elements.contentLoading.classList.add("hidden");
   elements.noContent.classList.add("hidden");
@@ -254,20 +270,26 @@ function updateDeckPreview() {
     return;
   }
 
-  const name = getDeckName();
+  const usingExisting = elements.deckMode.value === "existing";
+  const name = usingExisting ? getExistingDeckName() : getDeckName();
   const hasQuizzes = extractedData.quizzes.length > 0;
   const hasFlashcards = extractedData.flashcards.length > 0;
-  elements.deckPreview.classList.remove("hidden");
-  elements.previewQuiz.classList.toggle("hidden", !hasQuizzes);
-  elements.previewFlashcard.classList.toggle("hidden", !hasFlashcards);
+  elements.deckPreview.classList.toggle("hidden", usingExisting && !name);
+  elements.previewPrefix.textContent = usingExisting ? "Adds to" : "Creates";
+  elements.previewQuiz.classList.toggle("hidden", !hasQuizzes || (usingExisting && !name));
+  elements.previewFlashcard.classList.toggle("hidden", !hasFlashcards || (usingExisting && !name));
   elements.previewQuiz.querySelector(".preview-name").textContent = name;
   elements.previewFlashcard.querySelector(".preview-name").textContent = name;
 }
 
 function updateActionStates() {
   const hasExportData = hasContent(extractedData);
-  const contentReady = hasExportData && !scanning && !operationInProgress;
-  elements.deckName.disabled = !hasExportData || scanning || operationInProgress;
+  const usingExisting = elements.deckMode.value === "existing";
+  const hasDestination = usingExisting ? Boolean(getExistingDeckName()) : Boolean(getDeckName());
+  const contentReady = hasExportData && hasDestination && !scanning && !operationInProgress;
+  elements.deckMode.disabled = !hasExportData || scanning || operationInProgress;
+  elements.deckName.disabled = !hasExportData || usingExisting || scanning || operationInProgress;
+  elements.existingDeck.disabled = !hasExportData || !ankiConnected || !usingExisting || scanning || operationInProgress;
   elements.anki.disabled = !contentReady || !ankiConnected;
   elements.apkg.disabled = !contentReady;
   elements.csvAll.disabled = !contentReady;
@@ -287,6 +309,7 @@ async function sendToAnki() {
     action: ACTIONS.SEND_TO_ANKI,
     data: extractedData,
     deckName: getDeckName(),
+    existingDeckName: getExistingDeckName(),
     type: EXPORT_TYPES.ALL
   });
 
@@ -380,6 +403,58 @@ function showMessage(text, type) {
 
 function getDeckName() {
   return sanitizeDeckName(elements.deckName.value || extractedData?.title, "NotebookLM Export");
+}
+
+function getExistingDeckName() {
+  return String(elements.existingDeck.value || "").trim();
+}
+
+function updateDeckDestination() {
+  const usingExisting = elements.deckMode.value === "existing";
+  elements.newDeckControls.classList.toggle("hidden", usingExisting);
+  elements.existingDeckControls.classList.toggle("hidden", !usingExisting);
+  populateExistingDecks();
+  updateDeckPreview();
+  updateActionStates();
+}
+
+async function loadAnkiDecks() {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      target: MESSAGE_TARGETS.BACKGROUND,
+      action: ACTIONS.GET_ANKI_DECKS
+    });
+    ankiDecks = Array.isArray(response) ? response : [];
+  } catch {
+    ankiDecks = [];
+  }
+  populateExistingDecks();
+}
+
+function populateExistingDecks() {
+  const selected = getExistingDeckName();
+  elements.existingDeck.replaceChildren();
+
+  if (!ankiConnected) {
+    elements.existingDeck.add(new Option("Open Anki to load decks…", ""));
+    elements.existingDeck.disabled = true;
+    return;
+  }
+
+  if (ankiDecks.length === 0) {
+    elements.existingDeck.add(new Option("No Anki decks found", ""));
+    elements.existingDeck.disabled = true;
+    return;
+  }
+
+  elements.existingDeck.add(new Option("Select an existing deck…", ""));
+  for (const deck of [...ankiDecks].sort((a, b) => a.localeCompare(b))) {
+    elements.existingDeck.add(new Option(deck, deck));
+  }
+  if (selected && ankiDecks.includes(selected)) {
+    elements.existingDeck.value = selected;
+  }
+  elements.existingDeck.disabled = elements.deckMode.value !== "existing" || !hasContent(extractedData);
 }
 
 function getFilenameBase() {
