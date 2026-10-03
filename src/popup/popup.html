@@ -73,10 +73,26 @@
       </section>
 
       <section class="deck-section" aria-labelledby="deck-label">
-        <label id="deck-label" for="deck-name">Deck name</label>
-        <input id="deck-name" type="text" autocomplete="off" maxlength="120" placeholder="Notebook title" aria-describedby="deck-preview">
+        <label id="deck-label" for="deck-mode">Anki destination</label>
+        <select id="deck-mode" class="deck-select" aria-describedby="deck-preview">
+          <option value="new">Create a new deck</option>
+          <option value="existing">Use an existing deck</option>
+        </select>
+
+        <div id="new-deck-controls">
+          <label class="sub-label" for="deck-name">New deck name</label>
+          <input id="deck-name" type="text" autocomplete="off" maxlength="120" placeholder="Notebook title" aria-describedby="deck-preview">
+        </div>
+
+        <div id="existing-deck-controls" class="hidden">
+          <label class="sub-label" for="existing-deck">Existing deck</label>
+          <select id="existing-deck" class="deck-select" disabled aria-describedby="deck-preview">
+            <option value="">Loading Anki decks…</option>
+          </select>
+        </div>
+
         <div id="deck-preview" class="deck-preview hidden">
-          <span>Creates</span>
+          <span id="preview-prefix">Creates</span>
           <span id="preview-quiz" class="preview-deck hidden"><b>Quiz</b><span class="preview-name"></span></span>
           <span id="preview-flashcard" class="preview-deck hidden"><b>Cards</b><span class="preview-name"></span></span>
         </div>
