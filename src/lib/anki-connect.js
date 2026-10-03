@@ -122,7 +122,7 @@ async function ensureModel(spec) {
   });
 }
 
-async function addUniqueNotes(notes) {
+async function addUniqueNotes(notes, targetDeck) {
   if (notes.length === 0) {
     return { success: false, count: 0, skipped: 0, failed: 0, total: 0 };
   }
@@ -143,7 +143,9 @@ async function addUniqueNotes(notes) {
     throw new Error("AnkiConnect returned incomplete add-note results");
   }
 
-  const count = noteIds.filter(noteId => noteId !== null).length;
+  const createdNoteIds = noteIds.filter(noteId => noteId !== null);
+  await ensureCreatedCardsInDeck(createdNoteIds, targetDeck);
+  const count = createdNoteIds.length;
   const failed = noteIds.length - count;
   return {
     success: failed === 0,
@@ -170,7 +172,7 @@ export async function sendQuizzesToAnki(quizzes, deckName, existingDeckName = ""
     fields: quizToFields(quiz),
     tags: [...CONFIG.DEFAULT_TAGS]
   }));
-  return addUniqueNotes(notes);
+  return addUniqueNotes(notes, targetDeck);
 }
 
 export async function sendFlashcardsToAnki(flashcards, deckName, existingDeckName = "") {
@@ -192,7 +194,7 @@ export async function sendFlashcardsToAnki(flashcards, deckName, existingDeckNam
     },
     tags: [...CONFIG.DEFAULT_TAGS]
   }));
-  return addUniqueNotes(notes);
+  return addUniqueNotes(notes, targetDeck);
 }
 
 export async function sendContentToAnki(data, deckName, type = EXPORT_TYPES.ALL, existingDeckName = "") {
@@ -225,6 +227,43 @@ export async function sendContentToAnki(data, deckName, type = EXPORT_TYPES.ALL,
     }),
     { success: true, count: 0, skipped: 0, failed: 0, total: 0 }
   );
+}
+
+async function ensureCreatedCardsInDeck(noteIds, targetDeck) {
+  if (!noteIds.length) return;
+
+  const noteInfo = await ankiRequest("notesInfo", { notes: noteIds });
+  if (!Array.isArray(noteInfo)) {
+    throw new Error("AnkiConnect returned invalid note information");
+  }
+
+  const cardIds = noteInfo.flatMap(note => Array.isArray(note?.cards) ? note.cards : []);
+  if (cardIds.length === 0) {
+    throw new Error("Anki created the notes but no cards were generated");
+  }
+
+  const cardInfo = await ankiRequest("cardsInfo", { cards: cardIds });
+  if (!Array.isArray(cardInfo) || cardInfo.length !== cardIds.length) {
+    throw new Error("AnkiConnect returned incomplete card information");
+  }
+
+  const misplacedCards = cardInfo
+    .filter(card => card?.deckName !== targetDeck)
+    .map(card => card.cardId)
+    .filter(cardId => cardId != null);
+
+  if (misplacedCards.length) {
+    await ankiRequest("changeDeck", {
+      cards: misplacedCards,
+      deck: targetDeck
+    });
+  }
+
+  const verified = await ankiRequest("cardsInfo", { cards: cardIds });
+  const wrongDeck = verified.find(card => card?.deckName !== targetDeck);
+  if (wrongDeck) {
+    throw new Error(`Anki added the cards but could not place them in "${targetDeck}"`);
+  }
 }
 
 function buildDeckName(deckName, kind) {
