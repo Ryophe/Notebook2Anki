@@ -16,20 +16,24 @@ body {
   font-family: "Segoe UI Variable", "Aptos", "Segoe UI", system-ui, sans-serif;
 }
 .card {
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0;
-  padding: 28px 18px;
-  display: grid;
-  place-items: center;
+  padding: 24px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   box-sizing: border-box;
+  overflow-x: hidden;
   background: radial-gradient(circle at 50% -20%, rgba(168, 199, 250, .12), transparent 44%), #171918;
   font-size: 18px;
   line-height: 1.65;
   text-align: left;
 }
 .flashcard-shell {
-  width: min(100%, 640px);
+  width: min(100%, 900px);
+  margin: 0 auto;
   padding: clamp(24px, 5vw, 42px);
   box-sizing: border-box;
   border: 1px solid #3b423c;
@@ -54,6 +58,7 @@ body {
   letter-spacing: -.018em;
   overflow-wrap: anywhere;
   text-wrap: pretty;
+  word-break: normal;
 }
 .answer-divider {
   height: 1px;
@@ -67,6 +72,15 @@ body {
   line-height: 1.6;
   overflow-wrap: anywhere;
   text-wrap: pretty;
+  word-break: normal;
+}
+.back-section mjx-container,
+.back-section .MathJax,
+.back-section .katex,
+.back-section .katex-display {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
 }
 .front-repeat {
   min-width: 0;
@@ -94,7 +108,7 @@ code {
 img { display: block; max-width: 100%; height: auto; border-radius: 10px; }
 a { color: #a8c7fa; text-underline-offset: .2em; }
 @media (max-width: 520px) {
-  .card { padding: 12px; }
+  .card { padding: 12px 8px; }
   .flashcard-shell { padding: 24px 20px; border-radius: 14px 14px 14px 5px; }
 }
 `;
