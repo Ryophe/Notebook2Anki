@@ -41,25 +41,11 @@ const MODEL_SPECS = Object.freeze({
 });
 
 async function ankiRequest(action, params = {}) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
-
-  let response;
-  try {
-    response = await fetch(CONFIG.ANKI_CONNECT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, version: CONFIG.ANKI_CONNECT_VERSION, params }),
-      signal: controller.signal
-    });
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      throw new Error("AnkiConnect request timed out");
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
+  const response = await fetch(CONFIG.ANKI_CONNECT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, version: CONFIG.ANKI_CONNECT_VERSION, params })
+  });
 
   if (!response.ok) {
     throw new Error(`AnkiConnect returned HTTP ${response.status}`);
