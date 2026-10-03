@@ -63,7 +63,10 @@ function bindEvents() {
   elements.refresh.addEventListener("click", scanActiveTab);
   elements.deckMode.addEventListener("change", updateDeckDestination);
   elements.deckName.addEventListener("input", updateDeckPreview);
-  elements.existingDeck.addEventListener("change", updateDeckPreview);
+  elements.existingDeck.addEventListener("change", () => {
+    updateDeckPreview();
+    updateActionStates();
+  });
   elements.deckName.addEventListener("blur", () => {
     if (elements.deckName.value.trim()) elements.deckName.value = getDeckName();
     updateDeckPreview();
