@@ -128,16 +128,16 @@ async function checkAnkiStatus() {
   setConnectionState("checking", "Checking Anki");
 
   try {
-    const response = await chrome.runtime.sendMessage({
+    const response = await sendRuntimeMessageWithTimeout({
       target: MESSAGE_TARGETS.BACKGROUND,
       action: ACTIONS.CHECK_ANKI
-    });
+    }, 4000);
     ankiConnected = Boolean(response?.connected);
     if (ankiConnected) {
       // Do not block the connection indicator on deckNames: a slow/hung
       // AnkiConnect request must not leave the whole popup in "Checking Anki".
       setConnectionState("connected", "Anki ready");
-      loadAnkiDecks();
+      await loadAnkiDecks();
     } else {
       ankiDecks = [];
       populateExistingDecks();
@@ -420,10 +420,10 @@ function updateDeckDestination() {
 
 async function loadAnkiDecks() {
   try {
-    const response = await chrome.runtime.sendMessage({
+    const response = await sendRuntimeMessageWithTimeout({
       target: MESSAGE_TARGETS.BACKGROUND,
       action: ACTIONS.GET_ANKI_DECKS
-    });
+    }, 4000);
     ankiDecks = Array.isArray(response) ? response : [];
   } catch {
     ankiDecks = [];
