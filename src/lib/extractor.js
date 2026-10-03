@@ -46,6 +46,17 @@
     const quizzes = [];
     const flashcards = [];
 
+    // NotebookLM's canonical flashcard collection is data.flashcards.
+    // Handle it explicitly before the generic walk so changes elsewhere in
+    // the payload cannot prevent cards from being discovered.
+    if (Array.isArray(data?.flashcards)) {
+      for (const candidate of data.flashcards) {
+        if (!candidate || typeof candidate !== "object") continue;
+        const flashcard = normalizeFlashcard(candidate, ["flashcards"]);
+        if (flashcard) flashcards.push(flashcard);
+      }
+    }
+
     walkData(data, (value, path) => {
       if (!value || Array.isArray(value) || typeof value !== "object") return;
 
@@ -203,25 +214,29 @@
   }
 
   function parseAppData(value) {
-    const input = String(value ?? "");
-    if (!input) return null;
+    let current = value;
 
-    try {
-      return JSON.parse(input);
-    } catch {
-      let decoded = input;
-      for (let pass = 0; pass < 2; pass += 1) {
-        const next = decodeHtml(decoded);
-        if (next === decoded) break;
-        decoded = next;
-        try {
-          return JSON.parse(decoded);
-        } catch {
-          // Some NotebookLM payloads are encoded more than once.
-        }
+    // data-app-data is normally JSON, but some NotebookLM generations have
+    // returned an extra JSON-string layer. Peel a few layers safely.
+    for (let pass = 0; pass < 4; pass += 1) {
+      if (typeof current !== "string" || !current.trim()) return current || null;
+      const input = current.trim();
+
+      try {
+        const parsed = JSON.parse(input);
+        if (typeof parsed !== "string") return parsed;
+        current = parsed;
+        continue;
+      } catch {
+        // Try HTML entity decoding before giving up.
       }
-      return null;
+
+      const decoded = decodeHtml(input);
+      if (decoded === input) return null;
+      current = decoded;
     }
+
+    return typeof current === "object" ? current : null;
   }
 
   function decodeHtml(value) {
