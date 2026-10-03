@@ -266,9 +266,8 @@ async function ensureCreatedCardsInDeck(noteIds, targetDeck) {
   }
 }
 
-function buildDeckName(deckName, kind) {
-  const baseName = sanitizeDeckName(deckName, CONFIG.DEFAULT_DECK_NAME);
-  return `${CONFIG.DEFAULT_PARENT_DECK}::${baseName} - ${kind}`;
+function buildDeckName(deckName, _kind) {
+  return sanitizeDeckName(deckName, CONFIG.DEFAULT_DECK_NAME);
 }
 
 function resolveTargetDeck(deckName, kind, existingDeckName) {
