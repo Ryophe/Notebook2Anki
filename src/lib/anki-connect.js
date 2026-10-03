@@ -143,11 +143,42 @@ async function addUniqueNotes(notes) {
     throw new Error("AnkiConnect returned incomplete add-note results");
   }
 
-  const count = noteIds.filter(noteId => noteId !== null).length;
-  const failed = noteIds.length - count;
+  const createdNoteIds = noteIds.filter(noteId => Number.isInteger(noteId) && noteId > 0);
+  const failed = noteIds.length - createdNoteIds.length;
+  if (createdNoteIds.length === 0) {
+    return {
+      success: false,
+      count: 0,
+      skipped,
+      failed,
+      total: notes.length
+    };
+  }
+
+  const noteInfo = await ankiRequest("notesInfo", { notes: createdNoteIds });
+  if (!Array.isArray(noteInfo) || noteInfo.length !== createdNoteIds.length) {
+    throw new Error("AnkiConnect returned incomplete note verification results");
+  }
+
+  const expectedDecks = new Set(addableNotes.map(note => note.deckName));
+  const verified = noteInfo.filter(note => {
+    if (!note || !Array.isArray(note.cards)) return false;
+    return note.cards.some(card => {
+      const deckName = card?.deckName;
+      return typeof deckName === "string" && expectedDecks.has(deckName);
+    });
+  });
+
+  if (verified.length !== createdNoteIds.length) {
+    const missing = createdNoteIds.length - verified.length;
+    throw new Error(
+      `Anki created ${createdNoteIds.length} note${createdNoteIds.length === 1 ? "" : "s"}, but ${missing} ${missing === 1 ? "note is" : "notes are"} not in the requested deck`
+    );
+  }
+
   return {
     success: failed === 0,
-    count,
+    count: verified.length,
     skipped,
     failed,
     total: notes.length
