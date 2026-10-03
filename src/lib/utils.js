@@ -25,7 +25,9 @@ export function cleanMath(value) {
 
   const tokenized = text
     .replace(/\$\$(.*?)\$\$/gs, (_, body) => addToken(`\\[${body}\\]`, "display-math"))
+    .replace(/\\\[(.*?)\\\]/gs, (_, body) => addToken(`\\[${body}\\]`, "display-math"))
     .replace(/\$((?:[^$]|\\\$)+?)\$/g, (_, body) => addToken(`\\(${body}\\)`, "inline-math"))
+    .replace(/\\\((.*?)\\\)/gs, (_, body) => addToken(`\\(${body}\\)`, "inline-math"))
     .replace(/`([^`]+)`/g, (_, code) => addToken(`<code class="latex-snippet">${escapeHtml(code)}</code>`, "code"));
 
   const safe = escapeHtml(tokenized);
