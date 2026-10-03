@@ -8,8 +8,14 @@ export const FLASHCARD_FIELDS = Object.freeze([
 ]);
 
 export const FLASHCARD_STYLING = `
-html { overflow-x: hidden; }
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
 body {
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   background: #171918;
   color: #eef2ed;
@@ -25,6 +31,7 @@ body {
   align-items: flex-start;
   justify-content: center;
   box-sizing: border-box;
+  min-width: 0;
   overflow-x: hidden;
   overscroll-behavior-x: none;
   background: radial-gradient(circle at 50% -20%, rgba(168, 199, 250, .12), transparent 44%), #171918;
@@ -33,7 +40,9 @@ body {
   text-align: left;
 }
 .flashcard-shell {
-  width: min(100%, 1200px);
+  width: 100%;
+  max-width: 1200px;
+  min-width: 0;
   margin: 0 auto;
   padding: clamp(24px, 4vw, 40px);
   box-sizing: border-box;
@@ -41,7 +50,7 @@ body {
   border-radius: 18px 18px 18px 6px;
   background: #1f2320;
   box-shadow: 0 18px 50px rgba(7, 10, 8, .3);
-  overflow: visible;
+  overflow: hidden;
 }
 .card-label {
   margin-bottom: 16px;
@@ -51,8 +60,13 @@ body {
   letter-spacing: .1em;
   text-transform: uppercase;
 }
-.front-section {
+.front-section,
+.back-section,
+.front-repeat {
   min-width: 0;
+  max-width: 100%;
+}
+.front-section {
   color: #f5f7f4;
   font-size: clamp(1.25rem, 4vw, 1.55rem);
   font-weight: 620;
@@ -151,9 +165,74 @@ code {
 .back-section > :last-child { margin-bottom: 0; }
 img { display: block; max-width: 100%; height: auto; border-radius: 10px; }
 a { color: #a8c7fa; text-underline-offset: .2em; }
-@media (max-width: 520px) {
-  .card { padding: 12px 8px; }
-  .flashcard-shell { padding: 24px 20px; border-radius: 14px 14px 14px 5px; }
+@media (max-width: 700px) {
+  .card {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 6px;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .flashcard-shell {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 18px 14px;
+    border-radius: 14px 14px 14px 5px;
+  }
+
+  .card-label {
+    margin-bottom: 12px;
+    font-size: 10px;
+  }
+
+  .front-section {
+    font-size: clamp(1.05rem, 5.2vw, 1.3rem);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .back-section {
+    font-size: clamp(1rem, 4.6vw, 1.18rem);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .answer-divider {
+    margin: 18px 0 12px;
+  }
+
+  .front-section mjx-container[display="true"],
+  .back-section mjx-container[display="true"],
+  .front-repeat mjx-container[display="true"],
+  .front-section .MathJax_Display,
+  .back-section .MathJax_Display,
+  .front-repeat .MathJax_Display {
+    max-width: 100%;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .front-section img,
+  .back-section img,
+  .front-repeat img {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .flashcard-shell {
+    padding: 16px 12px;
+  }
+
+  .front-section {
+    font-size: 1.02rem;
+  }
+
+  .back-section {
+    font-size: .98rem;
+  }
 }
 `;
 
