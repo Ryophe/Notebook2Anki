@@ -20,16 +20,16 @@ export function cleanMath(value) {
 
   const tokenized = text
     .replace(/\$\$(.*?)\$\$/gs, (_, body) => {
-      const index = tokens.push(`\\[\${body}\\]`) - 1;
-      return `@@NBMATH\${index}@@`;
+      const index = tokens.push(`\\[${body}\\]`) - 1;
+      return `@@NBMATH${index}@@`;
     })
     .replace(/\$((?:[^$]|\\\$)+?)\$/g, (_, body) => {
-      const index = tokens.push(`\\(\${body}\\)`) - 1;
-      return `@@NBMATH\${index}@@`;
+      const index = tokens.push(`\\(${body}\\)`) - 1;
+      return `@@NBMATH${index}@@`;
     })
-    .replace(/\`([^\`]+)\`/g, (_, code) => {
-      const index = tokens.push(`<code class="latex-snippet">\${escapeHtml(code)}</code>`) - 1;
-      return `@@NBCODE\${index}@@`;
+    .replace(/`([^`]+)`/g, (_, code) => {
+      const index = tokens.push(`<code class="latex-snippet">${escapeHtml(code)}</code>`) - 1;
+      return `@@NBCODE${index}@@`;
     });
 
   const safe = escapeHtml(tokenized);
@@ -42,13 +42,13 @@ export function cleanMath(value) {
   const flushParagraph = () => {
     if (paragraph.length === 0) return;
     const content = paragraph.join("<br>");
-    if (content.trim()) blocks.push(`<p>\${content}</p>`);
+    if (content.trim()) blocks.push(`<p>${content}</p>`);
     paragraph = [];
   };
 
   const flushList = () => {
     if (!listType || listItems.length === 0) return;
-    blocks.push(`<\${listType}>\${listItems.map(item => `<li>\${item}</li>`).join("")}</\${listType}>`);
+    blocks.push(`<${listType}>${listItems.map(item => `<li>${item}</li>`).join("")}</${listType}>`);
     listType = null;
     listItems = [];
   };
@@ -82,8 +82,8 @@ export function cleanMath(value) {
   let html = blocks.join("");
   tokens.forEach((token, index) => {
     html = html
-      .replace(`@@NBMATH\${index}@@`, token)
-      .replace(`@@NBCODE\${index}@@`, token);
+      .replace(`@@NBMATH${index}@@`, token)
+      .replace(`@@NBCODE${index}@@`, token);
   });
   return html;
 }
