@@ -416,6 +416,42 @@ label {
   margin-bottom: 7px;
 }
 
+.sub-label {
+  margin-top: 9px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+.deck-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  outline: none;
+  background: var(--canvas-raised);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.deck-select:hover:not(:disabled) {
+  border-color: var(--line-strong);
+}
+
+.deck-select:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(168, 199, 250, .1);
+}
+
+.deck-select:disabled {
+  cursor: not-allowed;
+  opacity: .56;
+}
+
 input[type="text"] {
   width: 100%;
   height: 40px;
