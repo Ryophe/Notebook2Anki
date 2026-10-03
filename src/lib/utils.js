@@ -61,7 +61,7 @@ export function cleanMath(value) {
       continue;
     }
 
-    const bullet = trimmed.match(/^ -?\s+(.*)$/);
+    const bullet = trimmed.match(/^-\s+(.*)$/);
     const numbered = trimmed.match(/^\d+[.)]\s+(.*)$/);
     if (bullet || numbered) {
       flushParagraph();
