@@ -248,12 +248,37 @@ html.mobile .front-repeat mjx-container {
   max-width: 100% !important;
 }
 
+html.mobile .card {
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+}
+
+html.mobile .front-section mjx-container,
+html.mobile .back-section mjx-container,
+html.mobile .front-repeat mjx-container,
+html.mobile .front-section .MathJax,
+html.mobile .back-section .MathJax,
+html.mobile .front-repeat .MathJax {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+html.mobile .front-section mjx-container > svg,
+html.mobile .back-section mjx-container > svg,
+html.mobile .front-repeat mjx-container > svg {
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
+
 html.mobile .front-section mjx-container[display="true"],
 html.mobile .back-section mjx-container[display="true"],
 html.mobile .front-repeat mjx-container[display="true"] {
   width: 100% !important;
+  max-width: 100% !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
+  text-align: left !important;
 }
 
 @media (max-width: 700px) {
