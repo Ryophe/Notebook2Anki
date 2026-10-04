@@ -9,14 +9,22 @@ export const FLASHCARD_FIELDS = Object.freeze([
 
 export const FLASHCARD_STYLING = `
 html {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
+}
+html, body, .card, .flashcard-shell, .front-section, .back-section, .front-repeat,
+.front-section p, .back-section p, .front-repeat p,
+.front-section li, .back-section li, .front-repeat li {
+  box-sizing: border-box;
 }
 body {
-  width: 100%;
-  max-width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   margin: 0;
+  overflow-x: hidden !important;
   background: #171918;
   color: #eef2ed;
   font-family: "Segoe UI Variable", "Aptos", "Segoe UI", system-ui, sans-serif;
@@ -63,8 +71,10 @@ body {
 .front-section,
 .back-section,
 .front-repeat {
+  width: 100%;
   min-width: 0;
   max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .front-section {
   color: #f5f7f4;
@@ -115,8 +125,12 @@ body {
 .front-section .MathJax:not(.MathJax_Display),
 .back-section .MathJax:not(.MathJax_Display),
 .front-repeat .MathJax:not(.MathJax_Display) {
-  display: inline !important;
+  display: inline-block !important;
   max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+  vertical-align: baseline;
 }
 .front-section mjx-container[display="true"],
 .back-section mjx-container[display="true"],
@@ -175,9 +189,11 @@ a { color: #a8c7fa; text-underline-offset: .2em; }
   }
 
   .flashcard-shell {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     padding: 18px 14px;
     border-radius: 14px 14px 14px 5px;
   }
@@ -188,12 +204,14 @@ a { color: #a8c7fa; text-underline-offset: .2em; }
   }
 
   .front-section {
+    width: 100%;
     font-size: clamp(1.05rem, 5.2vw, 1.3rem);
     line-height: 1.45;
     overflow-wrap: anywhere;
   }
 
   .back-section {
+    width: 100%;
     font-size: clamp(1rem, 4.6vw, 1.18rem);
     line-height: 1.5;
     overflow-wrap: anywhere;
