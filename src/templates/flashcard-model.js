@@ -179,6 +179,83 @@ code {
 .back-section > :last-child { margin-bottom: 0; }
 img { display: block; max-width: 100%; height: auto; border-radius: 10px; }
 a { color: #a8c7fa; text-underline-offset: .2em; }
+/* AnkiDroid wraps card HTML inside #content and adds .mobile/.android classes.
+   Keep the review surface constrained to the WebView viewport. */
+html.mobile,
+html.mobile body,
+html.mobile #content {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+html.mobile .card {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 10px 6px !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+}
+
+html.mobile .flashcard-shell {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+}
+
+html.mobile .front-section,
+html.mobile .back-section,
+html.mobile .front-repeat {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+html.mobile .front-section *,
+html.mobile .back-section *,
+html.mobile .front-repeat * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html.mobile .front-section p,
+html.mobile .back-section p,
+html.mobile .front-repeat p,
+html.mobile .front-section li,
+html.mobile .back-section li,
+html.mobile .front-repeat li {
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+}
+
+html.mobile .front-section mjx-container,
+html.mobile .back-section mjx-container,
+html.mobile .front-repeat mjx-container {
+  max-width: 100% !important;
+}
+
+html.mobile .front-section mjx-container[display="true"],
+html.mobile .back-section mjx-container[display="true"],
+html.mobile .front-repeat mjx-container[display="true"] {
+  width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
 @media (max-width: 700px) {
   .card {
     width: 100%;
