@@ -281,6 +281,45 @@ html.mobile .front-repeat mjx-container[display="true"] {
   text-align: left !important;
 }
 
+/* Allow horizontal panning in AnkiDroid when a card contains content
+   that cannot be made narrower (for example very wide equations). */
+html.mobile,
+html.mobile body {
+  overflow-x: auto !important;
+}
+
+html.mobile #content {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-x pan-y !important;
+}
+
+html.mobile .card {
+  width: max-content !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  overflow-x: visible !important;
+}
+
+html.mobile .flashcard-shell {
+  width: max-content !important;
+  min-width: calc(100vw - 12px) !important;
+  max-width: none !important;
+  overflow: visible !important;
+}
+
+html.mobile .front-section,
+html.mobile .back-section,
+html.mobile .front-repeat {
+  width: auto !important;
+  max-width: none !important;
+  overflow: visible !important;
+}
+
 @media (max-width: 700px) {
   .card {
     width: 100%;
